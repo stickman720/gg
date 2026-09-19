@@ -1,0 +1,410 @@
+# 🏰 Telegram Strategic GameBot
+
+🌐 **[فارسی](README_FA.md)** | **[Türkçe](README_TR.md)** | **English**
+
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.6+](https://img.shields.io/badge/Python-3.6%2B-brightgreen.svg)](https://www.python.org/)
+[![Telegram Bot API](https://img.shields.io/badge/Telegram-Bot%20API-blue.svg?logo=telegram)](https://core.telegram.org/bots/api)
+[![SQLite](https://img.shields.io/badge/Database-SQLite-lightgrey.svg?logo=sqlite)](https://www.sqlite.org/)
+
+A **multiplayer strategic resource-management game bot** for Telegram groups. Players become lords of their own territory — managing economies, upgrading buildings, training armies, forging treaties, and launching attacks against rival lords — all within Telegram.
+
+> 🌍 **The bot now speaks three languages.** Run the variant that matches your community: `main.py` (Persian / فارسی), `main-en.py` (English), or `main-tr.py` (Turkish / Türkçe). See [Bot Language](#-bot-language).
+
+> 🚢 **NEW — World Trade.** Lords can now trade with each other by sea and land across a real world map: pick your route (pay the Suez Canal toll or sail around Africa), own straits and canals to collect tolls, and watch your convoy's progress live. See [World Trade](#world-trade).
+
+---
+
+## 📑 Table of Contents
+
+- [Features](#-features)
+- [Game Mechanics](#-game-mechanics)
+- [Admin Dashboard](#-admin-dashboard)
+- [Asset Catalog](#-asset-catalog)
+- [Bot Language](#-bot-language)
+- [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+- [Usage](#-usage)
+  - [Commands](#commands)
+  - [Menu Options](#menu-options)
+- [Testing](#-testing)
+- [Project Structure](#-project-structure)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Contact](#-contact)
+
+---
+
+## ✨ Features
+
+| Category | Details |
+|---|---|
+| 🏗️ **Resource Management** | Manage 8 resource types: money, stones, wood, iron, gold, food, meat, and clothes |
+| 🏭 **Building & Factory Upgrades** | Upgrade stone quarries, lumber mills, iron mines, gold mines, farms, animal farms, clothing factories, and banks |
+| ⚔️ **Military System** | Train swordsmen, gunmen, cavalry, special guards, cannons, and naval ships |
+| 📜 **Diplomacy & Treaties** | Create, send, and confirm treaties between players with interactive confirmations |
+| 🔔 **Weekly Production Cycles** | Collect factory and building outputs on a weekly schedule |
+| 💬 **In-Game Communication** | Send private messages between groups and publish statements to channels |
+| 🛡️ **Attack & Defense** | Plan and record military campaigns with detailed attack tracking |
+| 🚢 **World Trade** | Send goods to other lords by sea or land across a world map of oceans, straits, canals and Silk-Road passes — route choice, tolls, chokepoint ownership, and live convoy tracking |
+| 🛡️ **Admin Dashboard** | An inline `/admin` panel: player and world statistics, economy and military overviews, per-feature on/off switches, an admin action log, extra admins, country reset, and campaign/trade photos |
+| 🧩 **Custom Asset Types** | Resources, units and buildings are data, not code. Add archers, their training camp, its weekly output and its upgrade cost from inside Telegram — no Python, no migration |
+| 🔧 **Admin Controls** | Adjust asset values, trigger weekly updates, and manage trade locations, chokepoint owners, and trade settings |
+
+---
+
+## 🎮 Game Mechanics
+
+### Resources
+
+Players start with a base supply of resources and military units. Upgrade factories and buildings to boost production:
+
+- **Economy**: Money 💰 · Stones 🪨 · Wood 🪵 · Iron ⛏️ · Gold 🥇 · Food 🌾 · Meat 🥩 · Clothes 👕
+- **Military**: Swordsmen ⚔️ · Gunmen 🔫 · Cavalry Swordsmen 🐴 · Cavalry Gunmen 🏇 · Special Guard 🛡️ · Medium Cannons 💣 · Large Cannons 🎯 · Small/Medium/Large Ships 🚢
+
+### Buildings & Factories
+
+Each building can be upgraded through multiple levels. Higher levels produce more resources per weekly cycle:
+
+- Stone Factory · Wood Factory · Iron Factory · Gold Mine
+- Farm · Animal Farm · Clothes Factory · Bank
+- Military camps and shipyards for each unit type
+
+**Price and yield per level.** A building starts out flat: one upgrade cost and
+one yield that every level shares. Under 🧩 *Assets & units → a building →* 🎚
+**Per-level cost & yield** an admin gives a single level numbers of its own —
+level 7 costing more than level 6, yielding less, or both. Every level nobody
+has touched keeps falling back to the flat values, so tuning one level changes
+exactly one level. ♻️ puts a level back.
+
+**A level ceiling.** 🏁 **Level ceiling** caps how far a building goes — set it
+to 20 and level 20 is the last one anybody can buy. `0` means no ceiling, which
+is how every building ships. Lowering a ceiling never takes away a level a group
+has already paid for; it only stops the next purchase. The upgrade menu shows
+each building as `(3/20)` so the limit is visible before anyone spends anything.
+
+### World Trade
+
+Lords trade resources with each other across two world-map graphs, entirely through inline buttons:
+
+- **Sea routes** 🚢 — oceans, seas and gulfs connected through straits and canals (Suez, Panama, Hormuz, Bab-el-Mandeb, Malacca…). Chokepoints charge a toll; free-but-long detours exist around the Cape of Good Hope and Cape Horn.
+- **Land routes** 🐫 — Silk-Road regions (Persia, Anatolia, India, China…) linked through tolled passes such as Khyber, Pamir and the Sahara Route.
+- **Route choice** — the bot quotes up to three routes (fastest / toll-free / cheapest) with duration, fees and tolls; the sender picks the trade-off.
+- **Ships & caravans** — both are owned units with a per-vehicle cargo capacity, locked for the journey and returned on arrival. A country's caravan count sits in its assets beside its ships, and every capacity is set under ⚙️ *Trade settings → Vehicle capacity and cost*.
+- **Offers & escrow** — goods, vehicles and fees are deducted when the offer is sent; the receiving lord accepts or declines, and declined, cancelled or expired offers are fully refunded.
+- **Live tracking** — a background ticker moves convoys in real time and edits the tracking message at every waypoint ("the shipment passed the Suez Canal — toll paid"), announcing departures and arrivals to the game channel.
+- **Chokepoint ownership** 🪙 — the admin can grant a group ownership of any strait, canal or pass: passage tolls are then paid into that group's treasury, and its own convoys pass free. Tolls on unowned chokepoints are burned.
+- **Admin tuning** — each group's sea/land home location plus every speed, fee, toll and capacity value is editable in-game from the trade admin panel.
+- **An editable map** 🗺 — the world itself is data, not code. From 🗺 *Edit the trade map* an admin can rename any sea, strait or region in all three languages, change what kind of place it is, decide whether countries may be based there, price its toll, and draw entirely new places and routes. Each route carries a **length** (which sets the fee and which route counts as cheapest) and an optional **exact travel time**, so a leg can be retimed without moving any prices. Deleting a place or a route is owner-only and is refused while a convoy still needs it.
+- **Trade photos** 🖼 — sea trade and land trade each get their own photo (with a shared one as the fallback); the offer card, the live tracking message and the channel announcements are then sent as photos with captions. Bodies longer than Telegram's 1024-character caption limit fall back to plain text automatically.
+
+---
+
+## 🛡️ Admin Dashboard
+
+Send `/admin` in a group **or** in the bot's private chat to open the dashboard. Every button re-checks who tapped it, so a panel left open in a group is useless to non-admins.
+
+| Screen | What it does |
+|---|---|
+| 📊 **Statistics** | Group and lord counts, total wealth, total troops, total buildings, and trade activity (active / pending / completed) |
+| 💰 **Economy** | World totals per resource plus the richest group; drills down to a per-group card |
+| ⚔️ **Military** | World totals per unit type plus the strongest army; drills down to a per-group card |
+| ⚙️ **Enable/disable sections** | One switch per feature — assets, upgrade, statement, private message, treaty, campaign, trade, weekly update, lord registration. A disabled section vanishes from the `/start` menu **and** its callbacks are refused, so an old open menu cannot be used to get around it |
+| 🧾 **Action log** | Every admin change — who, what, when — newest first, 10 per page. *(owner only)* 🧹 **Clear the log** empties it behind a confirmation; the wipe leaves no entry of its own, and every admin is messaged instead |
+| 👑 **Admins** | *(owner only)* Promote extra admins by forwarding one of their messages or sending their numeric id, and demote them again. The owner from the configuration is always an admin and cannot be removed |
+| 🧩 **Assets & units** | Add, rename, retune or remove resource, unit and building types — see [Asset Catalog](#-asset-catalog) |
+| ♻️ **Reset a country** | Return one group's resources, troops and buildings to their starting values, behind a confirmation step — one country, or every country at once from the same screen. Treaties and trade locations are left alone, and the previous values are written to the action log |
+| 🖼 **Trade photos** | Set or clear a photo per trade kind — sea, land, or the shared fallback |
+| 🎛 **A country's assets** | Take a type away from one country, give it back, or leave a factory standing but idle |
+| ⛔️ **Open/close the bot** | `/off` closes the game to players and `/on` reopens it; admins keep the panel either way |
+| 🖼 **War photos** | Set or clear separate photos for land and sea campaign announcements |
+| 🌍 **Trade administration** | Home locations, chokepoint owners, trade settings, and 🗺 **Edit the trade map** — see [World Trade](#world-trade) |
+| 🔥 **Factory-reset the catalog** | *(owner only)* Restore every asset type to the values the game shipped with and clear the action log — see [Asset Catalog](#-asset-catalog) |
+| 🎮 **Game menu** | Opens the normal player menu without leaving the panel |
+
+### One country at a time
+
+The catalog says what exists in the game; 🎛 **A country's assets** says what
+exists *for one country*. A landlocked nation has no shipyards, a demilitarised
+one has no army, and a country under sanctions may have its factories standing
+but idle. Two switches, because they answer different questions:
+
+| | What it does |
+|---|---|
+| 🚫 **Does not have** | The type is not part of that country at all — gone from its status message and its upgrade menu, and its buildings stop producing. The stored number is left alone, so giving it back restores the country exactly as it was |
+| ⏸ **Switched off** | A building the country still has, which simply does not run. It stays visible with its level intact and can still be upgraded; it just yields nothing on the weekly cycle |
+
+Nothing is written for a country with no overrides, and ♻️ puts one country back
+to the catalog in a single tap. Destroying a type, or a country, forgets its
+overrides too.
+
+### Closing a route
+
+Not every country has a coast. 🚧 **Open/close a country's trade** closes sea or
+land trade for one country, and it then neither sends nor receives that way: the
+route disappears from its trade menu, and it stops appearing as a destination
+for anybody else. A trade already in flight is left alone — the cargo has to
+arrive. The check runs again at despatch, so closing a route while somebody is
+halfway through loading a convoy stops it rather than letting it sail.
+
+### Statements
+
+A statement is *from* somewhere, so a lord may only issue one inside their own
+country's group chat; sending it to the bot in private is refused. Admins and
+the owner may post from anywhere and are asked which country they are speaking
+for. Nothing reaches the channel until the preview has been confirmed, and there
+is no length limit: a statement past Telegram's 4096 characters is split across
+messages with the attribution on the last one, and a picture with a long caption
+goes out first with the words following it.
+
+### Appointing lords
+
+Players can no longer register themselves. An admin **replies to the player's message** in the group and sends `/setlord`; the bot verifies the sender is an admin and registers the replied-to user as that group's lord.
+
+`/unsetlord` takes a lordship back. In reply to a player it removes that player; sent on its own in a group it offers to retire the whole group. There is no separate registration record — the row *is* the country — but losing the lord no longer loses the country: when the last lord goes, its resources, army, buildings, treaties and home locations are archived and handed to whoever is appointed next. Zeroing a country is the ♻️ **Reset** button's job, and stays a separate, deliberate act. Removing one player is admin-level; retiring a group is **owner only** and asks for a button press first. Both refuse while that country still has a trade in flight, because a refund or delivery written to a deleted row is silently lost.
+
+### Campaigns and the war channel
+
+Public campaign announcements go to the **war channel** (`WAR_CHANNEL_ID`) and carry only the commander, origin, destination and arrival time. The full report, including the army details the player typed, is sent privately to the owner and every admin.
+
+---
+
+## 🧩 Asset Catalog
+
+Everything a country can own — every resource, unit and building — lives in the database rather than in Python literals. **Assets & units** in the admin panel is where you shape the game.
+
+### Adding archers
+
+1. 🧩 Assets & units → ⚔️ Units → ➕ Add a new type
+2. Internal key: `archers` · display name in Persian, English and Turkish · starting amount
+3. Back to 🧩 → 🏭 Buildings → ➕ Add a new type → `archery_range`, pick **Archers** as what it produces, and how many per level per weekly update
+4. Open the new building → 💸 Upgrade cost → set what one level costs in each resource
+
+Archers now appear in the assets screen, the upgrade menu, the weekly production cycle, the military overview and the admin asset editor. Nothing was recompiled.
+
+### What you can change
+
+| Field | Applies to | Notes |
+|---|---|---|
+| Display name | everything | Independently per language |
+| Starting amount | everything | Used by ♻️ *Reset a country* |
+| Produces / output | buildings | Which type it yields and how much per level per weekly update |
+| Upgrade cost | buildings | Any combination of resources; zero removes a line |
+| Tradeable | resources | Controls whether convoys can carry it |
+
+### Ordering
+
+A new type is appended to the end of its kind, which is rarely where it belongs. **⬆️ Move up / ⬇️ Move down** on the type's screen swaps it with its neighbour, so a resource you added last can sit above money. Ordering is within a kind, and the screen shows the current place ("3 of 9").
+
+**🔀 Section order** on the catalog home screen decides which of the three kinds comes first in `/دارایی` and on the panel's group card. It ships as resources → buildings → army; the arrows move a whole section.
+
+### Hiding and deletion
+
+Either can be applied to any type, whether it shipped with the game or you added it yourself:
+
+| | 🗑 **Remove from the game** | ❌ **Delete permanently** |
+|---|---|---|
+| Who | any admin | owner only |
+| Effect | disappears from every menu | catalog row, names, upgrade costs and the `users` column are all destroyed |
+| The numbers | kept — restoring brings them back | gone for good |
+| Reversible | yes | no |
+
+Deletion also clears the type out of anything that referenced it: a building that produced it now produces nothing, and upgrade costs naming it are dropped. It is refused while a trade in flight is carrying that good, because the refund would otherwise write to a column that no longer exists and the cargo would vanish. On SQLite older than 3.35 the column cannot be dropped; the type still leaves the game and the panel says the column stayed behind.
+
+A hidden resource also stops being charged for upgrades. The cost row survives, so restoring the resource restores the cost.
+
+**Four keys cannot be deleted**, only hidden: `money`, `small_ships`, `medium_ships` and `large_ships`. The trade system writes SQL against those columns directly — fees, tolls, escrow, refunds and ship capacity — so dropping one would break the next refund and lose whatever cargo was in flight. Hiding them is fine, because the column stays. Every other shipped type, cavalry and cannons and the bank included, can be deleted outright.
+
+Deleting a shipped type is recorded, so the next restart does not seed it back. The only way to bring it back is a factory reset, which restores the type at its shipped default with every country starting from zero.
+
+### Starting over
+
+**🔥 Factory-reset the asset catalog** *(owner only)* destroys every custom type and restores every built-in — names, starting amounts, order, production and upgrade costs — to exactly what the game shipped with, then clears the action log. Countries keep the assets they currently hold: what resets is the shape of the game, not what anyone owns. If a live trade is carrying one of the custom types, the whole reset is refused before anything is touched.
+
+### A bug this fixed
+
+Upgrade costs used to be written twice in each of the three bot files — once to test affordability, once to deduct. For **gold mine, farm, animal farm, swordsman camp and special guard camp** the two lists named different resources, so an upgrade could be approved against your iron and paid for with wood you did not have, driving the balance negative. There is now one cost table driving both, applied in a single transaction.
+
+---
+
+## 🌍 Bot Language
+
+The bot's in-game interface — buttons, prompts, resource names, and channel announcements — is available in **three languages**. Each language is a self-contained, ready-to-run entry point. Pick the one that fits your group and run it; there is no configuration flag to set.
+
+| Language | File to run | In-game menu example |
+|---|---|---|
+| 🇮🇷 **Persian / فارسی** | `main.py` | `💰 دارایی` · `🛠️ ارتقا` · `⚔️ لشکرکشی` |
+| 🇬🇧 **English** | `main-en.py` | `💰 Assets` · `🛠️ Upgrade` · `⚔️ Military Campaign` |
+| 🇹🇷 **Turkish / Türkçe** | `main-tr.py` | `💰 Varlıklar` · `🛠️ Yükseltme` · `⚔️ Askeri Sefer` |
+
+> All three variants share identical game logic, commands, database schema (`game_bot.db`), and balance — only the player-facing text differs. You can switch languages at any time by running a different file against the same database.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Python** 3.6 or higher
+- A **Telegram Bot Token** from [@BotFather](https://t.me/BotFather)
+- **SQLite3** (included with Python)
+
+### Installation
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone https://github.com/iliyadindar/Telegram-Strategic-GameBot.git
+   cd Telegram-Strategic-GameBot
+   ```
+
+2. **Install dependencies:**
+
+   ```bash
+   pip install pyTelegramBotAPI
+   ```
+
+### Configuration
+
+**Nothing is hardcoded.** Just start the bot and paste the values when it asks:
+
+```bash
+python main-en.py   # English  (or: python main.py for Persian, python main-tr.py for Turkish)
+```
+
+```
+=== Bot configuration ===
+These values are asked once and stored in bot_config.json.
+(That file is gitignored — never commit it.)
+
+Bot token (from @BotFather): 123456:ABC-DEF...
+Owner numeric user id (from @userinfobot): 123456789
+News channel id (e.g. @mychannel or -100…): @your_channel
+War channel id (leave blank to reuse the news channel): @your_war_channel
+```
+
+Answers are written to `bot_config.json`, so later runs start silently. Each value is resolved in this order:
+
+| Setting | Environment variable | Purpose |
+|---|---|---|
+| Bot token | `BOT_TOKEN` | From [@BotFather](https://t.me/BotFather) |
+| Owner id | `ADMIN_ID` | The permanent owner; can promote other admins from the panel |
+| News channel | `CHANNEL_ID` | Statements and trade announcements |
+| War channel | `WAR_CHANNEL_ID` | Campaign announcements. Blank reuses the news channel |
+
+**environment variable → `bot_config.json` → prompt.** Environment variables always win, so a server deployment never needs the file:
+
+```bash
+BOT_TOKEN=123456:ABC ADMIN_ID=123456789 CHANNEL_ID=@news python main-en.py
+```
+
+> The SQLite database (`game_bot.db`) is created automatically on the first run, and existing databases are migrated in place — no manual steps when upgrading.
+
+---
+
+## 📖 Usage
+
+### Commands
+
+| Command | Description |
+|---|---|
+| `/setlord` | **Admin only.** Reply to a player's message with this to make them the lord of that group |
+| `/unsetlord` | **Admin only.** Reply to a lord's message to remove them. Sent with no reply it offers to retire the whole group — *owner only*. The country keeps what it owns; the next lord inherits it |
+| `/start` | Open the main menu and start playing — in a group or in private chat |
+| `/admin` | Open the admin dashboard — works in a group or in private chat *(admin only)* |
+| `/on` · `/off` | Open or close the game to players. Admins keep the panel either way *(admin only)* |
+| `panel` / `menu` | The bare word does exactly what `/start` does — no slash needed |
+
+### Menu Options
+
+| Button | Action |
+|---|---|
+| 💰 **Assets** | View your current resources and military units |
+| 🛠️ **Upgrade** | Upgrade buildings and factories |
+| 🙌 **Statement** | Publish a statement to the game channel |
+| ✉️ **Private Message** | Send a private message to another group |
+| 📜 **Treaty** | Create, send, or confirm treaties with other players |
+| ⚔️ **Military Campaign** | Plan and record attack details |
+| 🚢 **World Trade** | Send trade convoys to other lords by sea or land |
+| 🛡️ **Admin Panel** | Open the admin dashboard *(admin only)* |
+| 🔨 **Weekly Update** | Collect weekly factory outputs *(admin only)* |
+| 🛠️ **Set Assets** | Adjust asset values *(admin only)* |
+| 🌍 **Trade Admin** | Assign home locations, chokepoint owners and trade settings *(admin only)* |
+
+> Any button whose feature has been switched off in the admin panel is left out of the menu entirely.
+
+---
+
+## 🧪 Testing
+
+The test suite runs offline against an in-memory database and a stub Telegram client — no token needed:
+
+```bash
+cd tests
+python -m unittest discover -s . -t .
+```
+
+It covers configuration resolution, access control, feature toggles, the action log, statistics, country reset, lord appointment, the RTL arrow direction, photo handling, the asset catalog (adding, retuning, hiding, upgrade accounting) and loads all three entry points end to end — including adding archers through the panel and checking a player can then train them.
+
+---
+
+## 📁 Project Structure
+
+```
+Telegram-Strategic-GameBot/
+├── main.py           # Bot (Persian / فارسی) — logic, handlers, and database setup
+├── main-en.py        # Bot (English) — same logic, English interface
+├── main-tr.py        # Bot (Turkish / Türkçe) — same logic, Turkish interface
+├── bot_config.py     # Token / owner / channel ids: environment → bot_config.json → prompt
+├── admin_panel.py    # Inline /admin dashboard: access, statistics, toggles, log, reset
+├── admin_strings.py  # The dashboard's text in all three languages
+├── asset_catalog.py  # Resources, units and buildings as data: seeding, costs, production
+├── asset_admin.py    # Panel screens for adding and retuning catalog types
+├── asset_ui.py       # Player screens: assets, upgrades, weekly production, asset editor
+├── country_assets.py # What one country has, as opposed to what the game has
+├── broadcast.py      # Statements and campaigns: preview, confirm, no length limit
+├── trade_system.py   # World trade engine shared by all three bots (routing, tolls, live tracking)
+├── trade_map.py      # The world map as data: places, routes, their names and timings
+├── trade_map_admin.py# Panel screens for editing the map
+├── tests/            # Offline test suite (stub bot + in-memory SQLite)
+├── LICENSE           # MIT License
+├── SECURITY.md       # Security policy
+├── README.md         # Project documentation (English)
+├── README_FA.md      # Project documentation (Persian / فارسی)
+└── README_TR.md      # Project documentation (Turkish / Türkçe)
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! To get started:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+For major changes, please open an issue first to discuss what you would like to change.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## 📬 Contact
+
+**Iliya Dindar** — Creator & Maintainer
+
+- Telegram: [@iliyadindar](https://t.me/iliyadindar)
+- GitHub: [@iliyadindar](https://github.com/iliyadindar)
+
+<p align="center">
+  ⭐ If you find this project useful, please consider giving it a star!
+</p>

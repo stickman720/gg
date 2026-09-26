@@ -853,6 +853,7 @@ def _finish_add(call, message):
 
 
 def _ask_number(call, prompt, done, chat_id=None, minimum=0):
+    minimum=-100000000000
     """Ask for an integer of at least `minimum`, re-asking until one arrives."""
     chat_id = call.message.chat.id if chat_id is None else chat_id
     _bot.send_message(chat_id, prompt)

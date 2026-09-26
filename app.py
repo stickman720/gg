@@ -20,8 +20,12 @@ WAR_CHANNEL_ID = _conf['war_channel_id']
 bot = telebot.TeleBot(API_TOKEN)
 
 # Initialize the database
-conn = sqlite3.connect('/disk/game_bot.db', check_same_thread=False)
-cursor = conn.cursor()
+try:
+  conn = sqlite3.connect('/data/game_bot.db', check_same_thread=False)
+  cursor = conn.cursor()
+except:
+  conn = sqlite3.connect('game_bot.db', check_same_thread=False)
+  cursor = conn.cursor()
 
 # Create the necessary tables
 cursor.execute('''CREATE TABLE IF NOT EXISTS users (
